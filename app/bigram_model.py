@@ -1,4 +1,3 @@
-"""A small bigram implementation for the Module 3 classroom API."""
 
 import random
 from collections import Counter, defaultdict
