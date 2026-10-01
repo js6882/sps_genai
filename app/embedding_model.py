@@ -1,4 +1,3 @@
-"""Use the same pretrained spaCy model as Module 2 Practical 3."""
 
 import spacy
 
