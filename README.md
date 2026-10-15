@@ -68,7 +68,7 @@ Reference: [spaCy vectors documentation](https://spacy.io/usage/linguistic-featu
 
 ## Assignment 2: CNN image classification
 
-The implementation and six worked theory answers are described in [ASSIGNMENT2.md](ASSIGNMENT2.md). The CNN matches the assigned architecture exactly, including its 64×64 RGB input and 8,192-to-100 fully connected layer (825,398 trainable parameters).
+The implementation and deployment are described in [ASSIGNMENT2.md](ASSIGNMENT2.md). The CNN matches the assigned architecture exactly, including its 64×64 RGB input and 8,192-to-100 fully connected layer (825,398 trainable parameters).
 
 ### Train before serving
 
