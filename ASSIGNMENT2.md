@@ -33,6 +33,12 @@ CIFAR-10 has RGB images of 32×32. Resize each to 64×64 to satisfy the specifie
 
 See README.md for training, serving, and request commands. The generated `models/cifar10_cnn.metrics.json` records actual results when training finishes. The checkpoint is a local generated artifact excluded from Git; copy it to the serving machine before starting the API. No checkpoint is downloaded or trained during API startup. Without it, the text routes remain available and classification returns HTTP 503.
 
+### Measured training result
+
+The completed 10-epoch run used seed 42 on Apple MPS. The selected checkpoint is epoch 9, with validation accuracy **60.58%** (5,000 images). Epoch 10 tied that accuracy, so the earlier checkpoint was retained. Test accuracy is **61.45%** (6,145 of 10,000 images), with mean test cross-entropy **1.081308**. Training accuracy at the selected epoch was **66.72%**. These results demonstrate a working baseline; they are not a claim of state-of-the-art performance.
+
+Full epoch history and configuration are saved in `models/cifar10_cnn.metrics.json`.
+
 ## Part 3: Arithmetic of CNNs
 
 For a convolution with dilation 1, the output size along either spatial axis is:

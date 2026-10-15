@@ -109,3 +109,7 @@ uv run pytest -q
 Tests check every layer shape, parameter count, gradient flow, deterministic checkpoint loading, image formats, error responses, and the existing text endpoints. Synthetic test weights validate the API plumbing; classification quality comes from the separate CIFAR-10 evaluation.
 
 Train or copy `models/cifar10_cnn.pt` before building the Docker image. The Dockerfile copies `models/` into the image. Training data is excluded from Docker and Git. Model weights are excluded from Git; preserve and transfer the trained checkpoint separately when deploying.
+
+### Completed training run
+
+The 10-epoch run (seed 42, Apple MPS) selected epoch 9: validation accuracy 60.58%, test accuracy **61.45%** on 10,000 CIFAR-10 test images, and mean test cross-entropy 1.081308. See `models/cifar10_cnn.metrics.json` for the full recorded history. The downloadable submission ZIP includes the trained checkpoint; a GitHub clone requires training or copying that checkpoint.
