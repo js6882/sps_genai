@@ -1,12 +1,15 @@
 [project]
 name = "sps-genai"
 version = "0.1.0"
-description = "Module 3 FastAPI application extended with spaCy word embeddings"
+description = "Module 4 FastAPI application with word embeddings and a CIFAR-10 CNN"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "fastapi[standard]>=0.115,<1.0",
     "spacy>=3.8,<3.9",
     "en-core-web-lg",
+    "torch>=2.5,<3",
+    "torchvision>=0.20,<1",
+    "pillow>=11,<13",
 ]
 
 [tool.uv.sources]

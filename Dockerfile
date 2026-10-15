@@ -5,5 +5,6 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 COPY app ./app
 COPY main.py ./
+COPY models ./models
 EXPOSE 80
 CMD ["uv", "run", "--frozen", "--no-dev", "fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "80"]

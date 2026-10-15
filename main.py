@@ -1,9 +1,12 @@
 from contextlib import asynccontextmanager
+import os
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, UploadFile, File
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
+from app.image_classifier import ImageClassifier, DEFAULT_CHECKPOINT, MAX_UPLOAD_BYTES
 from app.bigram_model import BigramModel
 from app.embedding_model import EmbeddingModel, MODEL_NAME
 
@@ -12,10 +15,15 @@ from app.embedding_model import EmbeddingModel, MODEL_NAME
 async def lifespan(app: FastAPI):
     # Load the large model once per server process, rather than once per request.
     app.state.embedding_model = EmbeddingModel()
+    checkpoint = os.environ.get("CNN_CHECKPOINT", str(DEFAULT_CHECKPOINT))
+    try:
+        app.state.image_classifier = ImageClassifier(checkpoint)
+    except FileNotFoundError:
+        app.state.image_classifier = None
     yield
 
 
-app = FastAPI(title="Module 3 API with Word Embeddings", lifespan=lifespan)
+app = FastAPI(title="Module 4 API with CNN Image Classification", lifespan=lifespan)
 
 # Sample corpus from the Module 3 activity.
 corpus = [
@@ -66,3 +74,27 @@ def get_embedding(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return EmbeddingResponse(word=word, model=MODEL_NAME, dimensions=len(vector), embedding=vector)
+
+
+class ClassificationResponse(BaseModel):
+    class_id: int
+    class_name: str
+    confidence: float
+    probabilities: dict[str, float]
+
+
+@app.post("/classify", response_model=ClassificationResponse)
+async def classify_image(request: Request, image: Annotated[UploadFile, File()]):
+    classifier = request.app.state.image_classifier
+    if classifier is None:
+        raise HTTPException(status_code=503, detail="CNN checkpoint missing. Train the model and restart the API.")
+    data = await image.read(MAX_UPLOAD_BYTES + 1)
+    await image.close()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Image must be at most 10 MiB.")
+    if not data:
+        raise HTTPException(status_code=422, detail="Image is empty.")
+    try:
+        return await run_in_threadpool(classifier.predict, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
