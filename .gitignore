@@ -7,3 +7,6 @@ __pycache__/
 
 data/
 **/models/*.pt
+
+!assignment3/models/mnist_generator.pt
+assignment3/models/samples/
