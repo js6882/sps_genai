@@ -7,7 +7,7 @@ APAN5560 Generative AI assignments, organized by assignment.
 | [assignment1](assignment1/) | Word embedding API, text generation, tests, and setup instructions |
 | [assignment2](assignment2/) | CNN architecture, CIFAR-10 training, image classification API, tests, and measured results |
 | [assignment3](assignment3/) | MNIST GAN, trained generator, image generation API, and Docker setup |
-| [assignment4](assignment4/) | CIFAR-10 energy and diffusion models, API, checkpoints, and worked theory answers |
+| [assignment4](assignment4/) | CIFAR-10 energy and diffusion models, API, checkpoints, and training results |
 
 Each folder is a complete project with its own README, dependencies and Dockerfile. Assignment 2 builds on Assignment 1 and includes its text endpoints.
 

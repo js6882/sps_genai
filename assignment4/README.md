@@ -55,17 +55,14 @@ curl 'http://localhost:8000/generate/gan?num_samples=4&seed=42' -o gan.png
 
 Open `http://localhost:8000/docs` for interactive documentation. `num_samples` accepts 1–16; `seed` is optional. Each response is a PNG grid. `GET /` lists loaded models. Unknown model names return 404, missing checkpoints return 503, and invalid query values return 422. The server never serves an untrained random model as a fallback. GAN weights are read from `../assignment3/models/mnist_generator.pt`. All inference runs on CPU; DDPM uses 1,000 network passes per request and can take several seconds.
 
-## Validation and theory
+## Validation
 
 ```bash
 pip install pytest httpx
 python -m pytest -q
-python theory_examples.py
 ```
 
 Tests cover analytic pixel descent, unchanged weights and existing weight gradients during sampling, state restoration after errors, weight updates during training, absent training-input gradients, the forward-diffusion equation, seeded generation, checkpoint loading, image responses, and API errors. Test checkpoints are randomly initialized fixtures; they do not establish trained-image quality.
-
-[Theory answers](theory_answers.md) show the derivations for all nine questions. [Executable calculations](theory_examples.py) verify the numeric embedding and autograd examples. Practical 3's sinusoidal frequency spacing is used, with the common transformer convention shown separately.
 
 ## Docker
 
@@ -80,4 +77,4 @@ The included CIFAR-10 checkpoints avoid training or dataset downloads on server 
 
 ## Sources
 
-The supplied Module 6 activity establishes the helper-library interface. Module 8 Practical 1 supplies the EBM sampler/loss approach; Practicals 2 and 3 supply time conditioning, noise-prediction training, and reverse diffusion. The implementation adapts these ideas to CIFAR-10 and the existing API. Exact tensor defaults and graph behavior are checked against the official PyTorch documentation linked in the theory answers.
+The supplied Module 6 activity establishes the helper-library interface. Module 8 Practical 1 supplies the EBM sampler/loss approach; Practicals 2 and 3 supply time conditioning, noise-prediction training, and reverse diffusion. The implementation adapts these ideas to CIFAR-10 and the existing API.
