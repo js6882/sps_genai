@@ -59,6 +59,6 @@ def train_gan(model, data_loader, criterion, optimizer, device='cpu', epochs=20,
     model.history = datalogs
     return model
 
-# Module 8 trainers share the Module 6 helper-library interface.
+# EBM and diffusion training functions.
 from .ebm import train_ebm
 from .diffusion import train_diffusion

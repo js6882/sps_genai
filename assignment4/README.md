@@ -1,80 +1,84 @@
-# Assignment 4: Energy-Based and Diffusion Models
+# Assignment 4
 
-This project extends the Module 6 helper-library/API structure with CIFAR-10 energy-based and diffusion image generators. Assignment 3 is preserved. The GAN endpoint continues to use its MNIST generator, while both new models use RGB CIFAR-10 images (3 × 32 × 32). Generation is unconditional; no class label is requested.
+This adds an energy-based model (EBM) and a diffusion model to the image generation API from Module 6. Both models are trained on CIFAR-10 and generate 32 × 32 color images. The GAN endpoint still uses the MNIST model from Assignment 3. None of the models lets you choose a class.
 
-## Setup and training
+## Run the API
 
-Run from `assignment4` with Python 3.12:
+From the `assignment4` folder, using Python 3.12:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python -m training.train_module8 --model ebm --epochs 5 --sampling-steps 20 --device mps
-python -m training.train_module8 --model diffusion --epochs 10 --device mps
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-Choose `--device cpu` or `--device cuda` for another machine. The dataset is downloaded to `data/`; `--data-dir ../assignment2/data` reuses the existing CIFAR-10 data. Training uses the full 50,000-image training split, batch size 128, seed 42, and Adam with learning rate 0.0001. Labels are ignored. No test-split data are used for training. Longer runs can improve quality; loss alone does not establish perceptual quality.
+The trained weights are included in `models/`. The GAN weights are in `../assignment3/models/mnist_generator.pt`.
 
-Checkpoints, loss histories, elapsed times, and seeded 16-image sample grids are written to `models/`. Checkpoint loading includes the diffusion configuration, so the reverse schedule matches training. `torch.load(..., weights_only=True)` is used for loading.
-
-## Architecture and gradient control
-
-- `helper_lib/model.py`: `get_model('GAN')`, `get_model('EBM')`, `get_model('Diffusion')`.
-- `helper_lib/trainer.py`: `train_gan`, `train_ebm`, `train_diffusion`.
-- `helper_lib/generator.py`: `generate_samples(model, device='cpu', num_samples=10, seed=None)` dispatches by model type and returns images in [0, 1]. The model must already be on the selected device.
-- `helper_lib/ebm.py`: four stride-2 convolutions with SiLU activations produce one unrestricted scalar energy per image. Lower energy means greater relative preference; there is no sigmoid probability output.
-- `helper_lib/diffusion.py`: a U-Net with skip connections processes 32 → 16 → 8 spatial resolutions. Sinusoidal timestep embeddings condition residual blocks. The output is a three-channel noise estimate. A 1,000-step linear beta schedule ranges from 0.0001 to 0.02, with MSE noise-prediction training and ancestral DDPM sampling.
-
-For EBM negative sampling, model parameters are frozen and `x.detach().requires_grad_(True)` makes pixels the differentiable input. `torch.autograd.grad(energy.sum(), x)` computes only pixel gradients. Each iteration detaches the graph; noise addition, clipped descent, and projection to [-1, 1] happen under `no_grad`. Sampling restores the prior parameter flags and train/eval mode even on error. Do not wrap EBM sampling in `inference_mode`; it needs input gradients. `no_grad` callers are supported because the sampler locally enables gradients.
-
-EBM training uses a replay buffer of 1,024 images, with 5% fresh random initializations. Negative chains use step size 10, noise standard deviation 0.005, and coordinate gradient clipping at 0.03. The loss is
-
-`mean(E(real)) - mean(E(fake.detach())) + 0.1 * (mean(E(real)^2) + mean(E(fake)^2))`.
-
-Weight gradients are clipped to norm 0.1. This finite-step, clipped Langevin-style sampler follows Practical 1; independent noise/step-size choices and clipping mean it is an approximate negative sampler, not an exact equilibrium MCMC claim. Generation uses 60 steps from uniform noise. The recorded short training run uses 20 negative steps per batch to limit compute.
-
-Diffusion forward corruption is performed without gradients, the noise target is fixed, and backpropagation updates the denoiser weights. Generation runs under `no_grad` and adds posterior noise only before the final reverse step. Sampling uses a local seeded generator without resetting the global random generator. API access is serialized per model because EBM sampling temporarily changes its gradient flags.
-
-## Recorded training results
-
-The EBM checkpoint was trained for five full CIFAR-10 epochs with 20 negative-sampling steps per batch. It took 298.3 seconds on the Mac GPU and ended with mean regularized contrastive loss -0.000292. **Its generated samples remain dominated by colored noise; the short run has not learned recognizable CIFAR-10 objects.** The checkpoint demonstrates the training and serving pipeline, not satisfactory visual quality. Improving it requires further training and tuning the negative chain, architecture, and optimization settings; the loss is not a calibrated image-quality score.
-
-The diffusion checkpoint was trained for ten full epochs in 738.9 seconds on the Mac GPU. Mean training noise MSE decreased from 0.160984 to 0.042609. This is training error, not a held-out quality metric. The seeded sample grid shows coarse color and scene structure, but images are blurry and objects are often ambiguous; this short run does not reach high-quality CIFAR-10 generation.
-
-See `models/ebm_training.json` and `models/ebm_samples.png` for the recorded run and unfiltered samples. The diffusion run is recorded separately in `models/diffusion_training.json`.
-
-## API
+Open `http://localhost:8000/docs` to try the endpoints, or save images with:
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
 curl 'http://localhost:8000/generate/ebm?num_samples=4&seed=42' -o ebm.png
 curl 'http://localhost:8000/generate/diffusion?num_samples=4&seed=42' -o diffusion.png
 curl 'http://localhost:8000/generate/gan?num_samples=4&seed=42' -o gan.png
 ```
 
-Open `http://localhost:8000/docs` for interactive documentation. `num_samples` accepts 1–16; `seed` is optional. Each response is a PNG grid. `GET /` lists loaded models. Unknown model names return 404, missing checkpoints return 503, and invalid query values return 422. The server never serves an untrained random model as a fallback. GAN weights are read from `../assignment3/models/mnist_generator.pt`. All inference runs on CPU; DDPM uses 1,000 network passes per request and can take several seconds.
+`num_samples` can be 1–16. Setting `seed` gives the same result on repeated requests. Each endpoint returns a PNG grid. The API runs on CPU, so diffusion takes longer because it uses 1,000 denoising steps. If a model's weights are missing, its endpoint returns 503.
 
-## Validation
+## Train the models
+
+```bash
+python -m training.train_module8 --model ebm --epochs 5 --sampling-steps 20 --device mps
+python -m training.train_module8 --model diffusion --epochs 10 --device mps
+```
+
+Use `--device cpu` or `--device cuda` if needed. CIFAR-10 downloads to `data/`. If you already have it from Assignment 2, add `--data-dir ../assignment2/data`.
+
+Both runs use all 50,000 training images, batch size 128, seed 42, and Adam with a learning rate of 0.0001. The class labels are not used. Training saves weights, losses, and a 16-image sample grid in `models/`.
+
+## How the models work
+
+The helper library keeps the same structure as the earlier assignment:
+
+- `model.py` selects the GAN, EBM, or diffusion model.
+- `trainer.py` provides the three training functions.
+- `generator.py` generates images from each model and returns pixel values in [0, 1].
+
+The EBM uses four convolution layers to give each image an energy value. To generate an image, it starts with random pixels and changes them to lower the energy. During sampling, the weights are frozen and `torch.autograd.grad` computes gradients for the pixels. During training, the sampled images are detached and the optimizer updates the weights instead.
+
+The EBM loss is:
+
+```text
+mean(E(real)) - mean(E(fake))
++ 0.1 * (mean(E(real)^2) + mean(E(fake)^2))
+```
+
+Training reuses a buffer of 1,024 images, starting 5% of samples from fresh noise. The saved run uses 20 sampling steps per batch; generation uses 60. Step size is 10, noise standard deviation is 0.005, and pixel gradients are clipped to [-0.03, 0.03]. This is an approximate sampler. It needs pixel gradients, so it cannot run inside `torch.inference_mode()`.
+
+The diffusion model uses a small U-Net with skip connections and timestep embeddings. It learns to predict the noise added to an image using MSE loss. Images go through 32 → 16 → 8 spatial sizes in the U-Net. Generation starts from Gaussian noise and runs 1,000 reverse steps, with beta increasing linearly from 0.0001 to 0.02. This generation loop does not need gradients.
+
+## Results
+
+The EBM trained for 5 epochs in about 5 minutes on the Mac GPU. Its final loss was -0.000292, but the samples are still mostly colored noise.
+
+The diffusion model trained for 10 epochs in about 12 minutes. Its training MSE dropped from 0.160984 to 0.042609. The samples have some color and shape, but they are blurry and the objects are hard to identify.
+
+The sample grids are `models/ebm_samples.png` and `models/diffusion_samples.png`. The JSON files in the same folder contain the losses and training settings.
+
+## Tests
 
 ```bash
 pip install pytest httpx
 python -m pytest -q
 ```
 
-Tests cover analytic pixel descent, unchanged weights and existing weight gradients during sampling, state restoration after errors, weight updates during training, absent training-input gradients, the forward-diffusion equation, seeded generation, checkpoint loading, image responses, and API errors. Test checkpoints are randomly initialized fixtures; they do not establish trained-image quality.
+The tests check gradient updates, sampling, repeatable results with a seed, loading saved weights, and API responses.
 
 ## Docker
 
-Build from the repository root so the existing GAN checkpoint is included:
+Run these commands from the repository root:
 
 ```bash
 docker build -f assignment4/Dockerfile -t assignment4 .
 docker run --rm -p 8000:80 assignment4
 ```
-
-The included CIFAR-10 checkpoints avoid training or dataset downloads on server startup.
-
-## Sources
-
-The supplied Module 6 activity establishes the helper-library interface. Module 8 Practical 1 supplies the EBM sampler/loss approach; Practicals 2 and 3 supply time conditioning, noise-prediction training, and reverse diffusion. The implementation adapts these ideas to CIFAR-10 and the existing API.

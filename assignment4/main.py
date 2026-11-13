@@ -51,7 +51,7 @@ def generate_images(model_name: str,
         raise HTTPException(404, 'Choose gan, ebm, or diffusion')
     if model_name not in app.state.models:
         raise HTTPException(503, f'{model_name} checkpoint missing; follow README training instructions')
-    # Sampling temporarily changes model mode/gradient flags; serialize per model.
+    # Handle one request per model while sampling changes its gradient settings.
     with app.state.locks[model_name]:
         images = generate_samples(app.state.models[model_name], num_samples=num_samples, seed=seed)
     output = BytesIO()

@@ -22,11 +22,9 @@ class EnergyModel(nn.Module):
 
 def langevin_sample(model, images, steps=60, step_size=10.0,
                     noise_std=0.005, generator=None, grad_clip=0.03):
-    """Update pixels only. Noise is added before each projected descent step.
+    """Add noise and lower image energy by updating pixels, not weights.
 
-    This follows Practical 1's finite-step, clipped Langevin-style sampler;
-    its independently chosen noise and step size do not give exact MCMC.
-    Do not call under torch.inference_mode(), which disallows autograd.
+    Pixel gradients are needed, so do not use torch.inference_mode().
     """
     if not isinstance(steps, int) or steps < 1:
         raise ValueError('steps must be a positive integer')
@@ -47,7 +45,7 @@ def langevin_sample(model, images, steps=60, step_size=10.0,
                 noise = torch.randn(x.shape, device=x.device, dtype=x.dtype,
                                     generator=generator)
                 x = (x + noise_std * noise).clamp(-1, 1)
-            # Even when the caller uses no_grad, this forward must be tracked.
+            # Enable gradients here to calculate how the pixels should change.
             with torch.enable_grad():
                 x = x.detach().requires_grad_(True)
                 gradient, = torch.autograd.grad(model(x).sum(), x)
@@ -84,7 +82,7 @@ def train_ebm(model, data_loader, optimizer, device='cpu', epochs=10,
             buffer[indices] = fake
             model.train()
             real = (real + noise_std * torch.randn_like(real)).clamp(-1, 1)
-            # Detached negatives: do not differentiate through the sampler.
+            # Detach fake images so this step only trains the model weights.
             real_energy, fake_energy = model(real), model(fake.detach())
             contrastive = real_energy.mean() - fake_energy.mean()
             regularizer = alpha * (real_energy.square().mean() + fake_energy.square().mean())

@@ -1,4 +1,4 @@
-"""Unconditional CIFAR-10 DDPM with a time-conditioned U-Net noise predictor."""
+"""CIFAR-10 diffusion model using a U-Net to predict noise."""
 import math
 import torch
 from torch import nn
@@ -114,7 +114,7 @@ def train_diffusion(model, data_loader, optimizer, device='cpu', epochs=10):
         for images, _ in data_loader:
             images = images.to(device).detach()
             timesteps = torch.randint(model.steps, (len(images),), device=device)
-            # Forward corruption is fixed; only noise-predictor weights learn.
+            # Add noise without tracking gradients for the images.
             with torch.no_grad():
                 noisy, noise = model.q_sample(images, timesteps)
             optimizer.zero_grad(set_to_none=True)
