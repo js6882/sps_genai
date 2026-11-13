@@ -10,3 +10,6 @@ data/
 
 !assignment3/models/mnist_generator.pt
 assignment3/models/samples/
+
+!assignment4/models/cifar10_ebm.pt
+!assignment4/models/cifar10_diffusion.pt
