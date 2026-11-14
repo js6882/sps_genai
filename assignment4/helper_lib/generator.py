@@ -10,7 +10,8 @@ def generate_samples(model, device='cpu', num_samples=10, seed=None):
         rng = torch.Generator(device=device)
         rng.seed() if seed is None else rng.manual_seed(seed)
         initial = torch.rand(num_samples, 3, 32, 32, device=device, generator=rng) * 2 - 1
-        return ((langevin_sample(model, initial, generator=rng) + 1) / 2).cpu()
+        return ((langevin_sample(model, initial, generator=rng,
+                                 **model.sampling_config) + 1) / 2).cpu()
     model.eval()
     rng = torch.Generator(device='cpu')
     if seed is None:

@@ -1,0 +1,48 @@
+{
+  "models": [
+    "diffusion",
+    "ebm",
+    "gan"
+  ],
+  "requests": [
+    {
+      "model": "ebm",
+      "status": 200,
+      "width": 32,
+      "height": 32,
+      "seconds": 2.605,
+      "repeatable": true
+    },
+    {
+      "model": "diffusion",
+      "status": 200,
+      "width": 32,
+      "height": 32,
+      "seconds": 8.417,
+      "repeatable": true
+    },
+    {
+      "model": "gan",
+      "status": 200,
+      "width": 28,
+      "height": 28,
+      "seconds": 0.036,
+      "repeatable": true
+    }
+  ],
+  "error_responses": "404 and 422 checked",
+  "container": {
+    "os": "Linux",
+    "architecture": "aarch64",
+    "torch": "2.15.0+cpu",
+    "torchvision": "0.29.2+cpu",
+    "cuda": null,
+    "cuda_packages": [],
+    "checkpoint_sha256": {
+      "cifar10_ebm.pt": "a636c20e067f5dcbbe5a2f43d8df5f6ca5df1f8e4856e1c7afcfd4cb31a4e045",
+      "cifar10_diffusion.pt": "0711b52f1b5f16256e8d110aa5000aa34155e0ce9281cf5df00ce362563aee35"
+    }
+  },
+  "unit_tests_passed": 10,
+  "checked_at_utc": "2026-11-14T07:02:20.966699+00:00"
+}

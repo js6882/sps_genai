@@ -28,8 +28,11 @@ async def lifespan(app):
             model = Generator()
             model.load_state_dict(checkpoint)
         else:
-            model = EnergyModel() if name == 'ebm' else DiffusionModel(**checkpoint['config'])
+            model = (EnergyModel(**checkpoint['config']) if name == 'ebm'
+                     else DiffusionModel(**checkpoint['config']))
             model.load_state_dict(checkpoint['state_dict'])
+            if name == 'ebm':
+                model.sampling_config = checkpoint.get('sampling_config', model.sampling_config)
         app.state.models[name] = model.eval()
         app.state.locks[name] = Lock()
     yield

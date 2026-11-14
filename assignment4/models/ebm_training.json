@@ -1,34 +1,49 @@
 {
   "dataset": "CIFAR-10 training split",
   "images": 50000,
-  "epochs": 5,
+  "epochs": 2,
+  "current_run_epochs": 1,
+  "resumed": true,
   "batch_size": 128,
   "seed": 42,
   "device": "mps",
   "learning_rate": 0.0001,
-  "training_seconds": 298.3053927499568,
-  "sampling_steps": 20,
+  "training_seconds": 1102.0764405409573,
+  "current_run_seconds": 647.5407063328894,
+  "sampling_steps": 60,
   "torch": "2.15.0",
   "history": [
     {
       "epoch": 1,
-      "loss": -0.0014111041609942913
+      "loss": -0.0014226203206181526,
+      "real_energy": -0.02096194801196456,
+      "fake_energy": -0.017544953993223606,
+      "seconds": 455.38394066598266,
+      "config": {
+        "channels": 32,
+        "smoothness": 0.0
+      },
+      "batch_size": 128
     },
     {
       "epoch": 2,
-      "loss": -0.0007167113388329745
-    },
-    {
-      "epoch": 3,
-      "loss": -0.000947339865937829
-    },
-    {
-      "epoch": 4,
-      "loss": -0.0003087364936992526
-    },
-    {
-      "epoch": 5,
-      "loss": -0.00029179982885718344
+      "loss": 0.27616500170707703,
+      "real_energy": 0.13775628554344177,
+      "fake_energy": -0.1312574414753914,
+      "seconds": 646.6924998749746,
+      "config": {
+        "channels": 32,
+        "smoothness": 5.0
+      },
+      "batch_size": 128
     }
-  ]
+  ],
+  "buffer_size": 4096,
+  "step_size": 10.0,
+  "noise_std": 0.005,
+  "regularization": 0.1,
+  "generation_steps": 240,
+  "architecture": "4x4 stride-2 convolutions",
+  "channels": 32,
+  "smoothness": 5.0
 }
